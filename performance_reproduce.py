@@ -4,6 +4,7 @@ import scanpy as sc
 from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA
 from sklearn.metrics import auc, average_precision_score, precision_recall_curve
+import time
 def test_logistic_clf(seed):
     auprc_list = []
     for dataset in ["J293t-dm","hm-6k","hm-12k","cline-ch","HEK-HMEC-MULTI","HMEC-orig-MULTI",
@@ -64,5 +65,9 @@ def test_logistic_clf(seed):
 
     return np.array(auprc_list).mean()
 
+start = time.time()
 test_logistic_clf(1236)
+end = time.time()
+
+print((end-start)/16)
 

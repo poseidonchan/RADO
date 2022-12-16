@@ -42,6 +42,8 @@ python performance_reproduce.py
 | 1236        | 0.5647   | 0.6603 | 0.7527 | 0.4899   | 0.4945         | 0.5250          | 0.6047         | 0.5644     | 0.5871    | 0.6237     | 0.5673     | 0.6197     | 0.6788        | 0.6786        | 0.5651    | 0.6536  | 0.6019        |
 
 According to the benchmarking results done by other researchers such as [vaeda](https://doi.org/10.1093/bioinformatics/btac720) and [scDblFinder](https://f1000research.com/articles/10-979), SimpleDoubletsDetection achieves the **best average AUPRC** across 16 benchmarking datasets.
+### Running time
+All these results are produced on a MacBook Air with M2 chip. To predict all 16 datasets, SimpleDoubletsDetection **only cost 237 seconds**, which is almost the fastest method.
 
 ### Datasets
 All the 16 datasets was colleted from the benchmarking paper of [Xi and Li](https://doi.org/10.1016/j.cels.2020.11.008). Datasets was transformed into **H5AD** format using [*sceasy*](https://github.com/cellgeni/sceasy). Processing script is convertH5AD.R.

@@ -1,3 +1,6 @@
+library(Seurat)
+library(sceasy)
+library(reticulate)
 data <- readRDS("pbmc-1C-dm.rds")
 obj <- CreateSeuratObject(counts = data[[1]])
 obj$label <- data[[2]]
