@@ -1,22 +1,44 @@
+import time
 import anndata
 import numpy as np
 import scanpy as sc
-from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA
+from sklearn.neural_network import MLPClassifier
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from sklearn.metrics import auc, average_precision_score, precision_recall_curve
-import time
-def test_logistic_clf(seed):
+def main():
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument(
+        "--iteration",
+        dest="iteration",
+        default=2,
+        type=int,
+        help="iteration number of iterative training procedure, usually 2 is enough"
+    )
+    parser.add_argument(
+        "--seed", dest="seed", default=1234, type=int,
+        help="pin random seed to reproduce results"
+    )
+    parser.add_argument(
+        "--dir",
+        dest="dir",
+        default=None,
+        help="specify the directory that contains all the datasets",
+    )
+
+    args = parser.parse_args()
     auprc_list = []
     for dataset in ["J293t-dm","hm-6k","hm-12k","cline-ch","HEK-HMEC-MULTI","HMEC-orig-MULTI",
                 "HMEC-rep-MULTI","mkidney-ch","nuc-MULTI","pbmc-1A-dm","pbmc-1B-dm","pbmc-1C-dm",
                 "pbmc-2ctrl-dm","pbmc-2stim-dm","pdx-MULTI","pbmc-ch"]:
-        adata = sc.read("./data/RNAseq/"+dataset+".h5ad")
+        adata = sc.read(args.dir+dataset+".h5ad")
         adata.X = adata.X.todense()
         idx_1 = np.arange(len(adata))
         idx_2 = np.arange(len(adata))
-        np.random.seed(seed)
+        np.random.seed(args.seed)
         np.random.shuffle(idx_1)
-        np.random.seed(seed+1)
+        np.random.seed(args.seed+1)
         np.random.shuffle(idx_2)
         sim_x = np.array(adata[idx_2].X + adata[idx_1].X)/2
         adata_sim = sc.AnnData(sim_x,var=adata.var)
@@ -34,7 +56,7 @@ def test_logistic_clf(seed):
         sim_x = pca.transform(np.array(sim_x))
         train_x = np.concatenate((sim_x,real_x)).copy()
         test_x = train_x[-adata.shape[0]:,]
-        for i in range(1):
+        for i in range(args.iteration):
             real_y = np.zeros((real_x.shape[0]))
             real_y[doublets_in_real] = 1
             train_y = np.concatenate((sim_y,real_y)).copy()
@@ -48,7 +70,7 @@ def test_logistic_clf(seed):
                                learning_rate='adaptive',
                                early_stopping=True,
                                tol=0,
-                               random_state=seed,max_iter=1000).fit(train_x, train_y)
+                               random_state=args.seed,max_iter=1000).fit(train_x, train_y)
 
             prob_y = nn.predict_proba(test_x)
             if i ==0:
@@ -65,9 +87,11 @@ def test_logistic_clf(seed):
 
     return np.array(auprc_list).mean()
 
-start = time.time()
-test_logistic_clf(1236)
-end = time.time()
 
-print((end-start)/16)
+if __name__ == "__main__":
+    start = time.time()
+    main()
+    end = time.time()
+    print("Total time consumption is",end-start,"seconds")
+
 
