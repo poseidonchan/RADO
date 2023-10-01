@@ -1,6 +1,6 @@
 ## RADO: Robust and Accurate DOublet detection
 
-![Figure1](/Users/chan/Documents/GitHub/RADO/figure/Figure1.png)
+![Figure1](https://github.com/poseidonchan/RADO/blob/main/figure/Figure1.png)
 
 ### Installation
 
