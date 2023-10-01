@@ -1,18 +1,20 @@
+import os
 import copy
 import torch
 import random
 import anndata
 import numpy as np
-import torch.nn as nn
 import scanpy as sc
-from sklearn.model_selection import KFold
-from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import average_precision_score
-from torch.utils.data.sampler import Sampler
-from sklearn.decomposition import PCA
-from torch.optim import Adam
 from tqdm import tqdm
+import torch.nn as nn
+from torch.optim import Adam
+from datetime import datetime
+from sklearn.decomposition import PCA
+from sklearn.model_selection import KFold
+from torch.utils.data.sampler import Sampler
+from torch.utils.data import Dataset, DataLoader
+from sklearn.metrics import average_precision_score
+from sklearn.model_selection import train_test_split
 
 
 import warnings
@@ -31,18 +33,18 @@ def reproducibility(seed=1):
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
-def RADO(adata: anndata.AnnData = None,
+def DoubletDetection(adata: anndata.AnnData = None,
          seed: int = 1234,
          kfold: int = 5,
          atac_data: bool = False
          ) -> anndata.AnnData:
     """
-    :param adata: the original.py scRNA-seq data, without any other preprocessing.
+    :param adata: the raw scRNA-seq data in adata.X
     :param seed: random seed of the model
     :param kfold: use k-1 folds as training set to train the model and predict doublets on the rest 1 fold.
-    :return: anndata with annotated doublets score in adata.obs['pred']
+    :return: anndata with annotated doublets score in adata.obs['RADO_doublet_score'] and adata.obs['RADO_doublet_call']
     """
-
+    adata_raw = adata.copy()
     """deal with atac data"""
     if atac_data:
         print("Selecting hihgly variable peaks for ATAC-seq data...")
@@ -59,8 +61,8 @@ def RADO(adata: anndata.AnnData = None,
     knn_score = naiveDoubletsScore(adata, sim_x, n_pcs=30, atac_data=atac_data)
     sim_knn_score = knn_score[:len(sim_x), ]
     real_knn_score = knn_score[len(sim_x):, ]
-    adata.obs['RADO_KNN_doublet_score'] = real_knn_score
-    adata.obs['RADO_KNN_doublet_call'] = np.where(real_knn_score > 0.5, 1, 0)
+    adata_raw.obs['RADO_KNN_doublet_score'] = real_knn_score
+    adata_raw.obs['RADO_KNN_doublet_call'] = np.where(real_knn_score > 0.5, 1, 0)
     print("Done!")
     """generate label of the simulated data"""
     sim_y = np.zeros((sim_x.shape[0], 1))
@@ -97,6 +99,14 @@ def RADO(adata: anndata.AnnData = None,
     kf = KFold(n_splits=kfold, shuffle=True, random_state=seed)
     
     print("Training and predicting...")
+
+    if not os.path.exists('./RADO_saved_models/'):
+        os.mkdir('./RADO_saved_models')
+
+    current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    sub_dir_path = os.path.join('./RADO_saved_models', current_time)
+    os.mkdir(sub_dir_path)
+
     for i, (train_idx, test_idx) in enumerate(tqdm(kf.split(adata.X), total=kf.get_n_splits())):
         train_x = np.concatenate((sim_x, real_x[train_idx])).copy()
         train_knn_score = np.concatenate((sim_knn_score, real_knn_score[train_idx]))
@@ -107,16 +117,16 @@ def RADO(adata: anndata.AnnData = None,
         test_knn_score = real_knn_score[test_idx]
         """define the logistic regression model"""
         clf = DoubletsClassifier(train_x, train_y, train_knn_score,
-                                 lr=1e-4, seed=seed)
+                                 lr=1e-4, seed=seed, save_path=sub_dir_path)
         clf.fit()
 
         pred = clf.predict_proba(test_x, test_knn_score)[:, 0]
 
         pred_y[test_idx] = pred
     print("Done!")
-    adata.obs['RADO_doublet_score'] = pred_y
-    adata.obs['RADO_doublet_call'] = np.where(pred_y > 0.5, 1, 0)
-    return adata
+    adata_raw.obs['RADO_doublet_score'] = pred_y
+    adata_raw.obs['RADO_doublet_call'] = np.where(pred_y > 0.5, 1, 0)
+    return adata_raw
 
 
 def SimulateDoublets(adata: anndata.AnnData = None,
@@ -200,7 +210,8 @@ class DoubletsClassifier():
                  batch_size: int = 256,
                  margin: float = 1,
                  sampling_rate: float = 0.5,
-                 validation_size: float = 0.2):
+                 validation_size: float = 0.2,
+                 save_path: str = None):
 
         super().__init__()
 
@@ -228,6 +239,7 @@ class DoubletsClassifier():
         self.margin = margin
         self.totalPNum = int(self.y_train.sum())  # total positive (labeled as 1) sample number
         self.posNum = int(sampling_rate * self.batch_size)
+        self.save_path = save_path
 
     def fit(self, iterations=100000):
         trainset = SimpleDataset(self.x_train, self.add_feature_train, self.y_train)
@@ -280,7 +292,7 @@ class DoubletsClassifier():
                 clf_.load_state_dict(state_dict)
 
             train_loss.append(train_epoch_loss.cpu().detach().numpy())
-            torch.save(clf.state_dict(), "./model/model_epoch=" + str(i) + ".pth")
+            torch.save(clf.state_dict(), os.path.join(self.save_path, "model_epoch=" + str(i) + ".pth"))
 
             for k, (index, x, x_cat, y) in enumerate(loaders[1]):
                 y_pred = clf(x, x_cat)
@@ -304,9 +316,9 @@ class DoubletsClassifier():
     def predict_proba(self, test_x, test_x_knn):
         if self.bestmodel is not None:
             # print("load best model")
-            self.clf.load_state_dict(torch.load("./model/model_epoch=" + self.bestmodel + ".pth"))
+            self.clf.load_state_dict(torch.load(os.path.join(self.save_path, "model_epoch=" + self.bestmodel + ".pth")))
         else:
-            self.clf.load_state_dict(torch.load("./model/model_epoch=" + self.lastepoch + ".pth"))
+            self.clf.load_state_dict(torch.load(os.path.join(self.save_path, "model_epoch=" + self.lastepoch + ".pth")))
         self.clf.eval()
         test_x = torch.from_numpy(test_x).float().to(device)
         test_x_knn = torch.from_numpy(test_x_knn).float().to(device)
