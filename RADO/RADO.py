@@ -138,7 +138,7 @@ def SimulateDoublets(adata: anndata.AnnData = None,
     :param adata: anndata with raw gene expression in adata.X, shape as (n, m)
     :param simulation_ratio: simulated doublets number is simulation_ratio*m
     :param seed: random seed
-    :return: return a simulated expression matrix of doublets, shape as (n, (1+ratio)*m)
+    :return: return a simulated expression matrix of doublets, shape as (ratio*n, m)
     """
     adata = adata.copy()
     if isinstance(adata.X, np.ndarray):
