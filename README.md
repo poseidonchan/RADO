@@ -6,10 +6,11 @@
 
 ### Installation
 ```bash
-conda create -n RADO_env python=3.7
-# optional: conda env create -f RADO_env.yml
+conda env create -f RADO_env.yml
 conda activate RADO_env
-pip install scRADO==1.2
+# optional: conda create -n RADO_env python=3.7
+# pip install umap==0.5.3 (to be compatible with python3.7)
+# pip install scRADO==1.2
 ```
 
 ### Usage
@@ -17,18 +18,18 @@ pip install scRADO==1.2
 **For scRNA-seq data**
 
 ```python
-from RADO import RADO
+from RADO import DoubletDetection
 # adata (.H5AD file) is commmon data form in single-cell data analysis
-adata = RADO(adata)
+adata = DoubletDetection(adata)
 # filter out doublet
 adata = adata[adata.obs['RADO_doublet_call']==0,]
 ```
 **For scATAC-seq data**
 
 ```python
-from RADO import RADO
+from RADO import DoubletDetection
 # Assume the adata.X is the peak matrix
-adata = RADO(adata, atac_data=True)
+adata = DoubletDetection(adata, atac_data=True)
 # filter out doublet
 adata = adata[adata.obs['RADO_doublet_call']==0,]
 ```
