@@ -9,7 +9,7 @@
 conda env create -f RADO_env.yml
 conda activate RADO_env
 # optional: conda create -n RADO_env python=3.7
-# pip install umap==0.5.3 (to be compatible with python3.7)
+# pip install umap-learn==0.5.3 (to be compatible with python3.7)
 # pip install scRADO==1.2
 ```
 
