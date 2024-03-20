@@ -172,6 +172,7 @@ def naiveDoubletsScore(adata: anndata.AnnData,
     """
     adata_sim = sc.AnnData(X=sim_x, var=adata.var)
     adata_sim.obs['label'] = "simulated"
+    adata.obs['label'] = "original"
     adata_new = anndata.concat([adata_sim, adata])
     n_neighbors = int(np.sqrt(adata_new.shape[0]))
     if isinstance(adata_new.X, np.ndarray):

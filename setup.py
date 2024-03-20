@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 setup(
     name = 'scRADO',
-    version = '1.2',
+    version = '1.3',
     description = 'doublet detection algorithm for droplet-based single-cell sequencing data',
     author = 'Yanshuo Chen',
     author_email = 'poseidonchan@icloud.com',
     url = 'https://github.com/poseidonchan/RADO',
-    license = 'GPL-3.0 License',
+    license = 'MIT License',
     packages = find_packages(),
     python_requires='>=3.7.1,<3.8',
     platforms = 'any',

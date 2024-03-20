@@ -6,11 +6,10 @@
 
 ### Installation
 ```bash
-conda env create -f RADO_env.yml
-conda activate RADO_env
-# optional: conda create -n RADO_env python=3.7
-# pip install umap-learn==0.5.3 (to be compatible with python3.7)
-# pip install scRADO==1.2
+conda create -n RADO_env python=3.7
+pip install umap-learn==0.5.3 #(to be compatible with python3.7)
+pip install scRADO==1.3
+
 ```
 
 ### Usage
@@ -24,6 +23,9 @@ adata = DoubletDetection(adata)
 # filter out doublet
 adata = adata[adata.obs['RADO_doublet_call']==0,]
 ```
+
+Also see the [tutorial](https://github.com/poseidonchan/RADO/blob/main/tutorial.ipynb) please, for any other questions, raise issues please!
+
 **For scATAC-seq data**
 
 ```python
@@ -33,7 +35,6 @@ adata = DoubletDetection(adata, atac_data=True)
 # filter out doublet
 adata = adata[adata.obs['RADO_doublet_call']==0,]
 ```
-
 
 It will return an adata with predicted doublet score and doublet for each droplet in the dataset. The prediction can be found in adata.obs['RADO_doublet_score'] and adata.obs['RADO_doublet_call']. For doublet calling, 0 represents singlet and 1 represents doublet.
 
