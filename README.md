@@ -1,6 +1,6 @@
 ## RADO: Robust and Accurate DOublet detection
 
-![scRADO](https://img.shields.io/badge/scRADO-v1.2-blue)![PyPI - Downloads](https://img.shields.io/pypi/dm/scRADO)![GitHub](https://img.shields.io/github/license/poseidonchan/RADO)
+![scRADO](https://img.shields.io/badge/scRADO-v1.3-blue)![PyPI - Downloads](https://img.shields.io/pypi/dm/scRADO)![GitHub](https://img.shields.io/github/license/poseidonchan/RADO)
 
 ![Figure1](https://github.com/poseidonchan/RADO/blob/main/figures/Figure1.png)
 
