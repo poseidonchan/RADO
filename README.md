@@ -7,6 +7,7 @@
 ### Installation
 ```bash
 conda create -n RADO_env python=3.7
+conda activate RADO_env
 pip install umap-learn==0.5.3 #(to be compatible with python3.7)
 pip install scRADO==1.3
 
